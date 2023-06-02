@@ -3,22 +3,31 @@ import cv2
 import os
 
 video =  cv2.VideoCapture(0)
-newPerson = False
+try:
+    os.remove("./people/representations_arcface.pkl")
+except:
+    print("No files found")
+
 
 while True:
     ret, frame = video.read()
     
-    cv2.imwrite("./captures/capture.jpg", frame)
+    # cv2.imwrite("./captures/capture.jpg", frame)
     height = frame.shape[0]
     width = frame.shape[1]
-    results = DeepFace.extract_faces("./captures/capture.jpg",detector_backend= "ssd", enforce_detection= False, align= False, target_size= frame.shape[:-1])
-    i=1
+    results = DeepFace.extract_faces(frame, detector_backend= "ssd", enforce_detection= False, align= True, target_size= frame.shape[:-1])
+
     if cv2.waitKey(1) & 0xFF == ord('r'):
         newName = input('name: ')  
-        newPerson = True
-        
+        cv2.imwrite("./people/{}.jpg".format(newName), frame)
+        try:
+            os.remove("./people/representations_arcface.pkl")
+        except:
+            print("No files found")
 
-    for face in results:
+           
+
+    for i, face in enumerate(results):
         coordinates = face["facial_area"]
         imagePath = "./captures/capture{}.jpg".format(i)
         # faceCut = frame[coordinates["y"]:coordinates["y"]+coordinates['h'], coordinates["x"]: coordinates["x"] + coordinates['w']]
@@ -27,26 +36,27 @@ while True:
         faceCut[0: coordinates["y"], 0:width] = 0
         faceCut[coordinates["y"]:coordinates["y"]+coordinates['h'], 0:coordinates["x"]] = 0
         faceCut[coordinates["y"]:coordinates["y"]+coordinates['h'], coordinates["x"]+ coordinates["w"]:width] = 0
-        cv2.imwrite(imagePath, faceCut) 
+        # cv2.imwrite(imagePath, faceCut) 
         # cv2.imshow("frame{}".format(i), cv2.imread(imagePath))
         # print(cv2.imread(imagePath))
-        result = DeepFace.find(img_path = imagePath, db_path = "./people", model_name="ArcFace", enforce_detection = False, )
+
+
+        if len(os.listdir("./people")) != 0: 
+            result = DeepFace.find(img_path = faceCut, db_path = "./people", model_name="Facenet512", enforce_detection = False, silent=True, align=True)
         
         # print(result[0])
-        if len(result[0]) > 0:
-            # print(result[0]["identity"]) 
-            # cv2.rectangle(frame,(result[0]["source_x"][0], result[0]["source_y"][0]) ,(result[0]["source_x"][0] + result[0]["source_w"][0], result[0]["source_y"][0] + result[0]["source_h"][0]), (255,255,0), 3)    
-            cv2.rectangle(frame, (coordinates["x"], coordinates["y"]), (coordinates["x"] + coordinates['w'], coordinates["y"]+coordinates['h']),  (255,255,0), 3)
-            cv2.putText(frame, result[0]["identity"][0][9:-4],  (coordinates["x"], coordinates["y"]), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 1)
-            i += 1 
-        else:
-            if newPerson:
-                cv2.imwrite("./people/{}.jpg".format(newName), frame)
-                os.remove("./people/representations_arcface.pkl")
-                newPerson = False
-            cv2.rectangle(frame, (coordinates["x"], coordinates["y"]), (coordinates["x"] + coordinates['w'], coordinates["y"]+coordinates['h']),  (255,255,0), 3)
+            if len(result[0]) > 0:
+                # print(result[0]["identity"]) 
+                # cv2.rectangle(frame,(result[0]["source_x"][0], result[0]["source_y"][0]) ,(result[0]["source_x"][0] + result[0]["source_w"][0], result[0]["source_y"][0] + result[0]["source_h"][0]), (255,255,0), 3)    
+                # cv2.rectangle(frame, (coordinates["x"], coordinates["y"]), (coordinates["x"] + coordinates['w'], coordinates["y"]+coordinates['h']),  (255,255,0), 3)
+                cv2.putText(frame, result[0]["identity"][0][9:-4],  (coordinates["x"], coordinates["y"]), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 1)
+                print("Recognized: " + result[0]["identity"][0][9:-4])
+        # else:
+        #     if newPerson:
+                
+        cv2.rectangle(frame, (coordinates["x"], coordinates["y"]), (coordinates["x"] + coordinates['w'], coordinates["y"]+coordinates['h']),  (255,255,0), 3)
 
-              
+                
     
     cv2.imshow("frame", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
