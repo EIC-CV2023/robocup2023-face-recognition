@@ -25,31 +25,31 @@ def main():
         while True:
             res = dict()
             try:
-                dataraw = server.recvMsg(conn)
-                # print("raw",type(dataraw))
-                data = dataraw.split(b'bytesplitter')
-                # print("data",type(data))
-                height = int(data[2].decode())
-                width = int(data[3].decode())
+                data = server.recvMsg(conn, has_splitter=True)
+                # print(data)
+
+                frame_height = int(data[0])
+                frame_width = int(data[1])
+                command = data[3].decode('utf8')
                
-                frame = np.frombuffer(data[1], dtype=np.uint8).reshape(height, width, 3)
-                results = DeepFace.extract_faces(frame, detector_backend= DETECTOR_BACKEND, enforce_detection= False, align= True, target_size= frame.shape[:-1])
+                frame = np.frombuffer(data[2], dtype=np.uint8).reshape(frame_height, frame_width, 3)
+                results = DeepFace.extract_faces(frame, detector_backend= DETECTOR_BACKEND, enforce_detection=False, align=True, target_size= frame.shape[:-1])
 
                 #recog
-                if data[0].decode() == 'recog':
+                if command == 'REGISTER':
                     registered_name = data[4].decode()
                     cv2.imwrite("./people/{}.jpg".format(registered_name), frame)
 
-                    feedback = bytes("Image and name received",'utf-8')
-                    msg = server.sendMsg(conn, feedback)
+                    res["feedback"] = f"{registered_name} registered"
+                    server.sendMsg(conn, json.dumps(res))
 
                     try:
                         os.remove(f"./people/{REPRESENTATION}")
                     except:
-                        print("No files found")
+                        print("No representation file found")
 
                 #detect
-                if data[0].decode() == 'detect':
+                if command == 'DETECT':
                     for i, face in enumerate(results):
                         coordinates = face["facial_area"]
                         face_x, face_y, face_w, face_h = coordinates["x"], coordinates["y"], coordinates["w"], coordinates["h"]
