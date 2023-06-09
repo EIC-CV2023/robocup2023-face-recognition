@@ -26,7 +26,7 @@ cap.set(4, 480)
 cap.set(3, 640)
 
 host = socket.gethostname()
-port = 10011
+port = 12304
 c = CustomSocket(host, port)
 c.clientConnect()
 

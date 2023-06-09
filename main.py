@@ -13,7 +13,7 @@ DETECTOR_BACKEND = "ssd"
 
 def main():
     HOST = socket.gethostname()
-    PORT = 10011
+    PORT = 12304
 
     server = CustomSocket(HOST, PORT)
     server.startServer()
