@@ -6,12 +6,16 @@ import json
 
 class CustomSocket:
 
-    def __init__(self, host, port):
+    def __init__(self, 
+                 host, 
+                 port,
+                 log: bool = True):
         self.host = host
         self.port = port
         self.SPLITTER = b"SPLITTER"
         self.sock = socket.socket()
         self.isServer = False
+        self.log = log
 
     def startServer(self):
         try:
@@ -30,8 +34,9 @@ class CustomSocket:
     def clientConnect(self):
         try:
             self.sock.connect((self.host, self.port))
-            print("[SOCKET CLIENT CONNECTED TO " +
-                  str(self.host)+" "+str(self.port)+"]")
+            if self.log:
+                print("[SOCKET CLIENT CONNECTED TO " +
+                    str(self.host)+" "+str(self.port)+"]")
         except Exception as e:
             print("Error :", e)
             return False
@@ -43,7 +48,8 @@ class CustomSocket:
             temp = msg.encode('utf-8')
         except Exception as e:
             # This message is an image
-            print("[IMAGE SENT THROUGH SOCKET]")
+            if self.log:
+                print("[IMAGE SENT THROUGH SOCKET]")
         msg = struct.pack('>I', len(msg)) + temp
         sock.sendall(msg)
 

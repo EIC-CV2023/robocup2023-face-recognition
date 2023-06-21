@@ -1,3 +1,4 @@
 deepface
 opencv-python
 numpy
+git+https://github.com/GameTL/ratfingers.git
