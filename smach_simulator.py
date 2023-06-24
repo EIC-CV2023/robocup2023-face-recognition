@@ -25,6 +25,7 @@ while cap.isOpened():
 
     res = c.register(frame, name)
     print(res)
+    cap.release()
     break
 
     # continue
