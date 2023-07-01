@@ -6,8 +6,8 @@ import json
 
 class CustomSocket:
 
-    def __init__(self, 
-                 host, 
+    def __init__(self,
+                 host,
                  port,
                  log: bool = True):
         self.host = host
@@ -36,7 +36,7 @@ class CustomSocket:
             self.sock.connect((self.host, self.port))
             if self.log:
                 print("[SOCKET CLIENT CONNECTED TO " +
-                    str(self.host)+" "+str(self.port)+"]")
+                      str(self.host)+" "+str(self.port)+"]")
         except Exception as e:
             print("Error :", e)
             return False
@@ -62,58 +62,73 @@ class CustomSocket:
             data.extend(packet)
         return data
 
-    def recvMsg(self, sock, has_splitter=False):
-
+    def recvMsg(self, sock, has_splitter=False, has_command=False):
         rawMsgLen = self.recvall(sock, 4)
         if not rawMsgLen:
-            print("here")
             return None
         msgLen = struct.unpack('>I', rawMsgLen)[0]
 
+        if has_command:
+            data = self.recvall(sock, msgLen).split(self.SPLITTER)
+            frame_height, frame_width = int(data[0]), int(data[1])
+            img = np.frombuffer(
+                data[-2], dtype=np.uint8).reshape(frame_height, frame_width, 3)
+            function = json.loads(data[-1].decode('utf-8'))
+            return frame_height, frame_width, img, function
+
         if has_splitter:
-            return self.recvall(sock, msgLen).split(self.SPLITTER)
+            data = self.recvall(sock, msgLen).split(self.SPLITTER)
+            frame_height, frame_width = int(data[0]), int(data[1])
+            img = np.frombuffer(
+                data[-1], dtype=np.uint8).reshape(frame_height, frame_width, 3)
+            return frame_height, frame_width, img
 
         return self.recvall(sock, msgLen)
 
     def req(self, image):
         h, w = image.shape[:-1]
-        bh = bytes(str(h),'utf-8')
-        bw = bytes(str(w),'utf-8')
+        bh = bytes(str(h), 'utf-8')
+        bw = bytes(str(w), 'utf-8')
         msg = self.SPLITTER.join((bh, bw, image.tobytes()))
         self.sendMsg(self.sock, msg)
-        
-        result = self.recvMsg(self.sock)
-        result = result.decode('utf-8')
-        return json.loads(result)
+        return json.loads(self.recvMsg(self.sock).decode('utf-8'))
+
+    def req_with_command(self, image, command):
+        h, w = image.shape[:-1]
+        bh = bytes(str(h), 'utf-8')
+        bw = bytes(str(w), 'utf-8')
+        msg = self.SPLITTER.join(
+            (bh, bw, image.tobytes(), json.dumps(command).encode("utf-8")))
+        self.sendMsg(self.sock, msg)
+        return json.loads(self.recvMsg(self.sock).decode('utf-8'))
 
     def register(self, image, name):
         h, w = image.shape[:-1]
-        bh = bytes(str(h),'utf-8')
-        bw = bytes(str(w),'utf-8')
+        bh = bytes(str(h), 'utf-8')
+        bw = bytes(str(w), 'utf-8')
         command = b'REGISTER'
         name = str(name).encode("utf-8")
         msg = self.SPLITTER.join((bh, bw, image.tobytes(), command, name))
         self.sendMsg(self.sock, msg)
-        
+
         result = self.recvMsg(self.sock)
         result = result.decode('utf-8')
         return json.loads(result)
 
     def detect(self, image):
         h, w = image.shape[:-1]
-        bh = bytes(str(h),'utf-8')
-        bw = bytes(str(w),'utf-8')
+        bh = bytes(str(h), 'utf-8')
+        bw = bytes(str(w), 'utf-8')
         command = b'DETECT'
         msg = self.SPLITTER.join((bh, bw, image.tobytes(), command))
         self.sendMsg(self.sock, msg)
-        
+
         result = self.recvMsg(self.sock)
         result = result.decode('utf-8')
         return json.loads(result)
 
     def stopServer(self):
         self.sock.shutdown(socket.SHUT_RDWR)
-
 
 
 def main():

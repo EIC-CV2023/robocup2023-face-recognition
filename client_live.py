@@ -13,7 +13,7 @@ def list_available_cam(max_n):
         if ret:
             list_cam.append(n)
         cap.release()
-    
+
     if len(list_cam) == 1:
         return list_cam[0]
     else:
@@ -40,13 +40,15 @@ while cap.isOpened():
     if task == "register":
         name = input("name: ")
 
-        res = c.register(frame, name)
+        res = c.req_with_command(
+            frame, command={"task": "REGISTER", "name": name, "only_face": False, "clear_db": True})
         print(res)
 
         task = "detect"
-    
+
     else:
-        res = c.detect(frame)
+        res = c.req_with_command(
+            frame, command={"task": "DETECT", "name": "", "only_face": False})
         print(res)
 
     # continue
