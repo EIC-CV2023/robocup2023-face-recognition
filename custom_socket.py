@@ -102,30 +102,30 @@ class CustomSocket:
         self.sendMsg(self.sock, msg)
         return json.loads(self.recvMsg(self.sock).decode('utf-8'))
 
-    def register(self, image, name):
-        h, w = image.shape[:-1]
-        bh = bytes(str(h), 'utf-8')
-        bw = bytes(str(w), 'utf-8')
-        command = b'REGISTER'
-        name = str(name).encode("utf-8")
-        msg = self.SPLITTER.join((bh, bw, image.tobytes(), command, name))
-        self.sendMsg(self.sock, msg)
+    # def register(self, image, name):
+    #     h, w = image.shape[:-1]
+    #     bh = bytes(str(h), 'utf-8')
+    #     bw = bytes(str(w), 'utf-8')
+    #     command = b'REGISTER'
+    #     name = str(name).encode("utf-8")
+    #     msg = self.SPLITTER.join((bh, bw, image.tobytes(), command, name))
+    #     self.sendMsg(self.sock, msg)
 
-        result = self.recvMsg(self.sock)
-        result = result.decode('utf-8')
-        return json.loads(result)
+    #     result = self.recvMsg(self.sock)
+    #     result = result.decode('utf-8')
+    #     return json.loads(result)
 
-    def detect(self, image):
-        h, w = image.shape[:-1]
-        bh = bytes(str(h), 'utf-8')
-        bw = bytes(str(w), 'utf-8')
-        command = b'DETECT'
-        msg = self.SPLITTER.join((bh, bw, image.tobytes(), command))
-        self.sendMsg(self.sock, msg)
+    # def detect(self, image):
+    #     h, w = image.shape[:-1]
+    #     bh = bytes(str(h), 'utf-8')
+    #     bw = bytes(str(w), 'utf-8')
+    #     command = b'DETECT'
+    #     msg = self.SPLITTER.join((bh, bw, image.tobytes(), command))
+    #     self.sendMsg(self.sock, msg)
 
-        result = self.recvMsg(self.sock)
-        result = result.decode('utf-8')
-        return json.loads(result)
+    #     result = self.recvMsg(self.sock)
+    #     result = result.decode('utf-8')
+    #     return json.loads(result)
 
     def stopServer(self):
         self.sock.shutdown(socket.SHUT_RDWR)
