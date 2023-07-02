@@ -33,10 +33,13 @@ def main():
 
         while True:
             res = dict()
+            msg = {"res": res}
             try:
                 data = server.recvMsg(
                     conn, has_splitter=True, has_command=True)
                 frame_height, frame_width, frame, command = data
+
+                msg["camera_info"] = [frame_width, frame_height]
 
                 # register
                 if command["task"] == 'REGISTER':
@@ -116,7 +119,7 @@ def main():
 
                 # cv2.imshow("frame", frame)
                 # cv2.waitKey(1)
-                server.sendMsg(conn, json.dumps(res))
+                server.sendMsg(conn, json.dumps(msg))
 
             except Exception as e:
                 traceback.print_exc()
