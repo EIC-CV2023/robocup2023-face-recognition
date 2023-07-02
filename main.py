@@ -28,6 +28,11 @@ def main():
     server.startServer()
 
     while True:
+        print("Clearing Face Recog Database")
+        for db_file in os.listdir("./people"):
+            os.remove(f"./people/{db_file}")
+        
+    	
         conn, addr = server.sock.accept()
         print("Client connected from", addr)
 
