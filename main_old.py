@@ -41,7 +41,6 @@ def main():
                 data = server.recvMsg(
                     conn, has_splitter=True, has_command=True)
                 frame_height, frame_width, frame, command = data
-                print(command)
 
                 msg["camera_info"] = [frame_width, frame_height]
 
@@ -85,22 +84,17 @@ def main():
                         res["feedback"] = f"No face to register"
 
                 # detect
-                if command["task"] == 'DETECT' and len(os.listdir("./people")) != 0:
-                    if command["only_face"]:
-                        if command["one_target"]:
-                            print("verify a target")
-                            verify = DeepFace.verify(frame, "./people/target.jpg", detector_backend="skip", model_name=DEEPFACE_MODEL, enforce_detection=False, align=False)
-                            # if verify["distance"]  verify["threshold"]:
-                            res["distance"] = verify["distance"]
-                            # else:
-                            #     res["distance"] = 
-                    else:
-                        result = DeepFace.find(
-                            img_path=frame, db_path="./people", detector_backend="skip", model_name=DEEPFACE_MODEL, enforce_detection=False, silent=True, align=True)
-                        if len(result[0]) > 0:
-                            recog_name = result[0]["identity"][0][9:-4]
-                            print("Recognized: " + recog_name)
-                            res["name"] = recog_name
+                if len(os.listdir("./people")) == 0:
+                    print("Database empty")
+                else:
+                    if command["task"] == 'DETECT':
+                        if command["only_face"]:
+                            result = DeepFace.find(
+                                img_path=frame, db_path="./people", model_name=DEEPFACE_MODEL, enforce_detection=False, silent=True, align=True)
+                            if len(result[0]) > 0:
+                                recog_name = result[0]["identity"][0][9:-4]
+                                print("Recognized: " + recog_name)
+                                res["name"] = recog_name
                         else:
                             results = DeepFace.extract_faces(
                                 frame, detector_backend=DETECTOR_BACKEND, enforce_detection=False, align=True, target_size=frame.shape[:-1])
@@ -111,7 +105,7 @@ def main():
                                     "x"], coordinates["y"], coordinates["w"], coordinates["h"]
                                 # imagePath = "./captures/capture{}.jpg".format(i)
                                 face_crop = frame[face_y:face_y +
-                                                face_h, face_x:face_x+face_w]
+                                                  face_h, face_x:face_x+face_w]
 
                                 result = DeepFace.find(
                                     img_path=face_crop, db_path="./people", model_name=DEEPFACE_MODEL, enforce_detection=False, silent=True, align=True)
@@ -128,8 +122,6 @@ def main():
 
                 # cv2.imshow("frame", frame)
                 # cv2.waitKey(1)
-                msg["res"] = res
-                print(res)
                 server.sendMsg(conn, json.dumps(msg))
 
             except Exception as e:
